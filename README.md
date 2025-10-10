@@ -13,6 +13,5 @@ Ohne Eclipse:
 Wenn’s meckert:
 - JDK 17+ benutzen (in Eclipse JDK statt JRE wählen)
 - Linux: Grafiklibs (GTK) installiert?
-- Umlaute ok (Build nutzt UTF‑8)
 
 Fertig =)
