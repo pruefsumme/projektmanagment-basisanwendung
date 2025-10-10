@@ -1,0 +1,57 @@
+plugins {
+    id 'application'
+    id 'eclipse'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+// Use the system JDK. If you prefer a specific version, re-enable the toolchain block.
+
+// Your sources live directly under 'src', so point Gradle there
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src']
+        }
+        resources {
+            // If you later add non-Java assets under src, keep them as resources
+            srcDirs = ['src']
+            exclude '**/*.java'
+        }
+    }
+    test {
+        java.srcDirs = []
+        resources.srcDirs = []
+    }
+}
+
+// Make sure compilation uses UTF-8 on all platforms
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+// Configure JavaFX modules you use. Controls pulls in base and graphics.
+javafx {
+    version = '21.0.5'
+    modules = [ 'javafx.controls' ]
+}
+
+application {
+    // Main Application class
+    mainClass = 'gui.Main'
+}
+
+// Helpful default JVM args when running via `gradle run` (can be empty)
+// applicationDefaultJvmArgs = [ ]
+
+// Make the generated Eclipse project use the same toolchain level in classpath
+eclipse {
+    classpath {
+        // Ensure Gradle manages JRE container; Buildship will align it to the toolchain
+        downloadJavadoc = true
+        downloadSources = true
+    }
+}
