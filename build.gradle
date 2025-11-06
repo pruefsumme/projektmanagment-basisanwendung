@@ -8,6 +8,11 @@ repositories {
     mavenCentral()
 }
 
+dependencies {
+    implementation 'com.mysql:mysql-connector-j:9.0.0'   // <- richtiges groupId
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+}
 // Use the system JDK. If you prefer a specific version, re-enable the toolchain block.
 
 // Your sources live directly under 'src', so point Gradle there
@@ -54,4 +59,6 @@ eclipse {
         downloadJavadoc = true
         downloadSources = true
     }
+
 }
+
