@@ -59,6 +59,47 @@ public class ExportManager {
     }
     
     /**
+     * Generiert den Dateinamen nach dem Schema: Hausnummer_Nachname.csv
+     * Entfernt ungültige Zeichen aus dem Dateinamen
+     * @param kunde Kunde-Objekt
+     * @return Formatierter Dateiname
+     * @throws IllegalArgumentException wenn Kunde null ist oder Pflichtfelder fehlen
+     */
+    public String generiereDateiname(Kunde kunde) {
+        if (kunde == null) {
+            throw new IllegalArgumentException("Kunde darf nicht null sein");
+        }
+        
+        String hausnummer = kunde.getHausnummer();
+        String nachname = kunde.getNachname();
+        
+        if (hausnummer == null || hausnummer.trim().isEmpty()) {
+            throw new IllegalArgumentException("Hausnummer darf nicht leer sein");
+        }
+        
+        if (nachname == null || nachname.trim().isEmpty()) {
+            throw new IllegalArgumentException("Nachname darf nicht leer sein");
+        }
+        
+        // Entferne ungültige Zeichen für Dateinamen (Windows und Unix)
+        hausnummer = bereinigeDateinamenTeil(hausnummer);
+        nachname = bereinigeDateinamenTeil(nachname);
+        
+        return hausnummer + "_" + nachname + ".csv";
+    }
+    
+    /**
+     * Entfernt ungültige Zeichen aus einem Dateinamen-Teil
+     * @param teil Teil des Dateinamens
+     * @return Bereinigter String
+     */
+    private String bereinigeDateinamenTeil(String teil) {
+        // Entferne ungültige Zeichen: \ / : * ? " < > |
+        return teil.replaceAll("[\\\\/:*?\"<>|]", "")
+                   .trim();
+    }
+    
+    /**
      * Exportiert Sonderwünsche eines Kunden in eine CSV-Datei
      * @param kunde Kunde-Objekt
      * @param csvInhalt CSV-formatierter String mit den Sonderwünschen
