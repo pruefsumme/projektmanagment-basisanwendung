@@ -70,11 +70,11 @@ public class ExportManager {
             throw new IllegalArgumentException("Kunde darf nicht null sein");
         }
         
-        String hausnummer = kunde.getHausnummer();
+        int hausnummer = kunde.getHausnummer();
         String nachname = kunde.getNachname();
         
-        if (hausnummer == null || hausnummer.trim().isEmpty()) {
-            throw new IllegalArgumentException("Hausnummer darf nicht leer sein");
+        if (hausnummer <= 0) {
+            throw new IllegalArgumentException("Hausnummer muss größer als 0 sein");
         }
         
         if (nachname == null || nachname.trim().isEmpty()) {
@@ -82,10 +82,10 @@ public class ExportManager {
         }
         
         // Entferne ungültige Zeichen für Dateinamen (Windows und Unix)
-        hausnummer = bereinigeDateinamenTeil(hausnummer);
+        String hausnummerStr = String.valueOf(hausnummer);
         nachname = bereinigeDateinamenTeil(nachname);
         
-        return hausnummer + "_" + nachname + ".csv";
+        return hausnummerStr + "_" + nachname + ".csv";
     }
     
     /**
