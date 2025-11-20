@@ -12,6 +12,14 @@ public class GrundrissModel {
     
     private List<Sonderwunsch> sonderwuensche;
     private List<Integer> ausgewaehlteSonderwunschIds;
+    // NEW: aktuelle Hausnummer für Speicherung/Laden
+    private Integer aktuelleHausnummer;
+    // NEW: Konstante für Kategorie Grundriss-Varianten
+    private static final int KATEGORIE_GRUNDRISS = 20;
+    // NEW: DB-Verbindungsdaten
+    private static final String DB_URL = "jdbc:mysql://sr-labor.ddns.net:3306/PM_Gruppe_A";
+    private static final String DB_USER = "PM_Gruppe_A";
+    private static final String DB_PASS = "123456789";
     
     /**
      * Konstruktor für GrundrissModel
@@ -21,19 +29,26 @@ public class GrundrissModel {
         this.ausgewaehlteSonderwunschIds = new ArrayList<>();
     }
     
+    // NEW: setzt die aktuelle Hausnummer
+    /**
+     * setzt die aktuelle Hausnummer für Speicherung/Laden
+     * @param hausnummer Hausnummer
+     */
+    public void setAktuelleHausnummer(int hausnummer) {
+        this.aktuelleHausnummer = hausnummer;
+    }
+    
     /**
      * Liest die Grundriss-Sonderwünsche aus der Datenbank
      */
     public void leseGrundrissSonderwuensche() {
         this.sonderwuensche.clear();
-
-        
         
         String sql = "SELECT idSonderwunsch, Beschreibung, Preis FROM Sonderwunsch " +
-                    "WHERE Sonderwunschkategorie_idSonderwunschkategorie = 20";
+                    "WHERE Sonderwunschkategorie_idSonderwunschkategorie = " + KATEGORIE_GRUNDRISS +
+                    " ORDER BY idSonderwunsch";
         
-        try (Connection conn = DriverManager.getConnection(
-                "jdbc:mysql://sr-labor.ddns.net:3306/PM_Gruppe_A", "PM_Gruppe_A", "123456789");
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
             
@@ -47,6 +62,27 @@ public class GrundrissModel {
             }
         } catch (SQLException e) {
             System.err.println("Fehler beim Lesen der Grundriss-Sonderwünsche: " + e.getMessage());
+        }
+        
+        // NEW: bereits gespeicherte Auswahl für aktuelles Haus laden
+        this.ausgewaehlteSonderwunschIds.clear();
+        if (this.aktuelleHausnummer != null) {
+            String sqlAuswahl = "SELECT swh.Sonderwunsch_idSonderwunsch " +
+                                "FROM Sonderwunsch_has_Haus swh " +
+                                "JOIN Sonderwunsch s ON s.idSonderwunsch = swh.Sonderwunsch_idSonderwunsch " +
+                                "WHERE swh.Haus_Hausnr = ? AND s.Sonderwunschkategorie_idSonderwunschkategorie = ?";
+            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+                 PreparedStatement ps = conn.prepareStatement(sqlAuswahl)) {
+                ps.setInt(1, this.aktuelleHausnummer);
+                ps.setInt(2, KATEGORIE_GRUNDRISS);
+                try (ResultSet rsSel = ps.executeQuery()) {
+                    while (rsSel.next()) {
+                        this.ausgewaehlteSonderwunschIds.add(rsSel.getInt(1));
+                    }
+                }
+            } catch (SQLException e) {
+                System.err.println("Fehler beim Laden der Auswahl: " + e.getMessage());
+            }
         }
     }
     
@@ -129,10 +165,46 @@ public class GrundrissModel {
      * @param ausgewaehlteSw Array der ausgewählten Sonderwunsch-IDs
      */
     public void speichereSonderwuensche(int[] ausgewaehlteSw) {
-        // Wird in T3 implementiert
-        this.ausgewaehlteSonderwunschIds.clear();
-        for (int id : ausgewaehlteSw) {
-            this.ausgewaehlteSonderwunschIds.add(id);
+        // NEW: Prüfung ob Hausnummer gesetzt
+        if (this.aktuelleHausnummer == null) {
+            System.err.println("Keine Hausnummer gesetzt. Speicherung übersprungen.");
+            return;
+        }
+        
+        // NEW: Transaktion: Alte Einträge löschen, neue einfügen
+        String deleteSQL = "DELETE swh FROM Sonderwunsch_has_Haus swh " +
+                           "JOIN Sonderwunsch s ON swh.Sonderwunsch_idSonderwunsch = s.idSonderwunsch " +
+                           "WHERE swh.Haus_Hausnr = ? AND s.Sonderwunschkategorie_idSonderwunschkategorie = ?";
+        String insertSQL = "INSERT INTO Sonderwunsch_has_Haus (Sonderwunsch_idSonderwunsch, Haus_Hausnr) VALUES (?, ?)";
+        
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS)) {
+            conn.setAutoCommit(false);
+            
+            try (PreparedStatement del = conn.prepareStatement(deleteSQL)) {
+                del.setInt(1, this.aktuelleHausnummer);
+                del.setInt(2, KATEGORIE_GRUNDRISS);
+                del.executeUpdate();
+            }
+            
+            try (PreparedStatement ins = conn.prepareStatement(insertSQL)) {
+                for (int id : ausgewaehlteSw) {
+                    ins.setInt(1, id);
+                    ins.setInt(2, this.aktuelleHausnummer);
+                    ins.addBatch();
+                }
+                ins.executeBatch();
+            }
+            
+            conn.commit();
+            // NEW: lokale Liste aktualisieren
+            this.ausgewaehlteSonderwunschIds.clear();
+            for (int id : ausgewaehlteSw) {
+                this.ausgewaehlteSonderwunschIds.add(id);
+            }
+            System.out.println("Sonderwünsche erfolgreich gespeichert für Haus " + this.aktuelleHausnummer);
+        } catch (SQLException e) {
+            System.err.println("Fehler beim Speichern der Sonderwünsche: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }
