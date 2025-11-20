@@ -13,7 +13,7 @@ import javafx.stage.Stage;
 public class KundeControl {
        
     // das View-Objekt des Grundfensters mit den Kundendaten
-	private KundeView kundeView;
+    private KundeView kundeView;
     // das Model-Objekt des Grundfensters mit den Kundendaten
     private KundeModel kundeModel;
     /* das GrundrissControl-Objekt fuer die Sonderwuensche
@@ -21,10 +21,10 @@ public class KundeControl {
     private GrundrissControl grundrissControl;
     
     /**
-	 * erzeugt ein ControlObjekt inklusive View-Objekt und Model-Objekt zum 
-	 * Grundfenster mit den Kundendaten.
-	 * @param primaryStage, Stage fuer das View-Objekt zu dem Grundfenster mit den Kundendaten
-	 */
+     * erzeugt ein ControlObjekt inklusive View-Objekt und Model-Objekt zum 
+     * Grundfenster mit den Kundendaten.
+     * @param primaryStage, Stage fuer das View-Objekt zu dem Grundfenster mit den Kundendaten
+     */
     public KundeControl(Stage primaryStage) { 
         this.kundeModel = KundeModel.getInstance(); 
         this.kundeView = new KundeView(this, primaryStage, kundeModel);
@@ -35,29 +35,34 @@ public class KundeControl {
      * Das GrundrissView wird sichtbar gemacht.
      */
     public void oeffneGrundrissControl(){
-    	if (this.grundrissControl == null){
-    		this.grundrissControl = new GrundrissControl(kundeModel);
-      	}
-    	this.grundrissControl.oeffneGrundrissView();
+        if (this.grundrissControl == null){
+            this.grundrissControl = new GrundrissControl();
+          }
+        // NEW: Hausnummer aus KundeModel holen und an GrundrissControl übergeben
+        Integer hausnr = this.kundeModel.getAktuelleHausnummer();
+        if (hausnr != null) {
+            this.grundrissControl.setAktuelleHausnummer(hausnr);
+        }
+        this.grundrissControl.oeffneGrundrissView();
     }
     
-	/**
-	 * speichert ein Kunde-Objekt in die Datenbank
-	 * @param kunde, Kunde-Objekt, welches zu speichern ist
-	 */
+    /**
+     * speichert ein Kunde-Objekt in die Datenbank
+     * @param kunde, Kunde-Objekt, welches zu speichern ist
+     */
     public void speichereKunden(Kunde kunde){
-      	try{
-    		kundeModel.speichereKunden(kunde);
-    	}
-    	catch(SQLException exc){
-    		exc.printStackTrace();
-    		this.kundeView.zeigeFehlermeldung("SQLException",
+          try{
+            kundeModel.speichereKunden(kunde);
+        }
+        catch(SQLException exc){
+            exc.printStackTrace();
+            this.kundeView.zeigeFehlermeldung("SQLException",
                 "Fehler beim Speichern in die Datenbank");
-    	}
-    	catch(Exception exc){
-    		exc.printStackTrace();
-    		this.kundeView.zeigeFehlermeldung("Exception",
+        }
+        catch(Exception exc){
+            exc.printStackTrace();
+            this.kundeView.zeigeFehlermeldung("Exception",
                 "Unbekannter Fehler");
-    	}
+        }
     }
 }

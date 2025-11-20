@@ -8,6 +8,11 @@ repositories {
     mavenCentral()
 }
 
+dependencies {
+    // MySQL JDBC-Treiber für Datenbankverbindung
+    implementation 'mysql:mysql-connector-java:8.0.33'
+}
+
 // Use the system JDK. If you prefer a specific version, re-enable the toolchain block.
 
 // Your sources live directly under 'src', so point Gradle there
