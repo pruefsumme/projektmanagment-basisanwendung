@@ -137,6 +137,24 @@ public class KundeControl {
      * @param kunde, Kunde-Objekt, welches zu speichern ist
      */
     public void speichereKunden(Kunde kunde){
+        // Validierung Telefonnummer
+        if (kunde.getTelefonnummer() != null && !kunde.getTelefonnummer().isEmpty() && !kunde.getTelefonnummer().matches("\\d+")) {
+            this.kundeView.zeigeFehlermeldung("Validierung", "Die Telefonnummer darf nur Ziffern enthalten.");
+            return;
+        }
+
+        // Validierung Hausnummer belegt
+        try {
+            if (kundeModel.istHausnummerBelegt(kunde.getHausnummer())) {
+                this.kundeView.zeigeFehlermeldung("Validierung", "Die Hausnummer " + kunde.getHausnummer() + " ist bereits belegt.");
+                return;
+            }
+        } catch (SQLException exc) {
+            exc.printStackTrace();
+            this.kundeView.zeigeFehlermeldung("Validierung", "Fehler bei der Validierung der Hausnummer.");
+            return;
+        }
+
         try{
             kundeModel.speichereKunden(kunde);
         }

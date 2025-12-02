@@ -790,6 +790,20 @@ public final class KundeModel {
         }
     }
 
+    public boolean istHausnummerBelegt(int hausnr) throws SQLException {
+        final String sql = "SELECT COUNT(*) FROM Kunde WHERE Haus_Hausnr = ?";
+        try (Connection con = DbConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, hausnr);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * löscht alle Kunden zu einer Hausnummer aus der Datenbank.
      *
