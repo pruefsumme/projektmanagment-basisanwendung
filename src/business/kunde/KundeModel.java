@@ -60,6 +60,18 @@ public final class KundeModel {
         460, 560, 660
     };
 
+    // Descriptions and Prices for Heizungen (Category 50)
+    private static final String[] HEIZUNG_DESCRIPTIONS = {
+        "Zusaetzlicher Standard-Heizkoerper",
+        "Heizkoerper mit glatter Oberflaeche",
+        "Handtuchheizkoerper",
+        "Fussbodenheizung ohne DG",
+        "Fussbodenheizung mit DG"
+    };
+    private static final int[] HEIZUNG_PRICES = {
+        660, 160, 660, 8990, 9990
+    };
+
 
     private void initSonderwuensche() {
         try (Connection con = DbConnector.getConnection()) {
@@ -74,6 +86,12 @@ public final class KundeModel {
                 String desc = INNENTUEREN_DESCRIPTIONS[i];
                 int price = INNENTUEREN_PRICES[i];
                 initSingleSonderwunsch(con, desc, price, 40);
+            }
+            // Check/Init Category 50 (Heizungen)
+            for (int i=0; i < HEIZUNG_DESCRIPTIONS.length; i++) {
+                String desc = HEIZUNG_DESCRIPTIONS[i];
+                int price = HEIZUNG_PRICES[i];
+                initSingleSonderwunsch(con, desc, price, 50);
             }
          } catch (Exception e) { e.printStackTrace(); }
     }
@@ -233,6 +251,76 @@ public final class KundeModel {
            }
         } catch (Exception e) { throw new SQLException(e); }
    }
+
+    // --- Methoden fuer Heizungen (Category 50) ---
+
+    public int[] getHeizungPreise() {
+        int[] prices = new int[HEIZUNG_DESCRIPTIONS.length];
+        try (Connection con = DbConnector.getConnection()) {
+            for (int i = 0; i < HEIZUNG_DESCRIPTIONS.length; i++) {
+                String desc = HEIZUNG_DESCRIPTIONS[i];
+                PreparedStatement ps = con.prepareStatement("SELECT Preis FROM Sonderwunsch WHERE Beschreibung = ?");
+                ps.setString(1, desc);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) prices[i] = rs.getInt("Preis");
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return prices;
+    }
+
+    public int[] getHeizungSelection() {
+        int[] selection = new int[HEIZUNG_DESCRIPTIONS.length];
+        if (this.kunde == null) return selection;
+        int hausNr = this.kunde.getHausnummer();
+        try (Connection con = DbConnector.getConnection()) {
+            for (int i=0; i<HEIZUNG_DESCRIPTIONS.length; i++) {
+                String desc = HEIZUNG_DESCRIPTIONS[i];
+                String sql = "SELECT * FROM Sonderwunsch_has_Haus shh " +
+                             "JOIN Sonderwunsch s ON shh.Sonderwunsch_idSonderwunsch = s.idSonderwunsch " +
+                             "WHERE shh.Haus_Hausnr = ? AND s.Beschreibung = ?";
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setInt(1, hausNr);
+                    ps.setString(2, desc);
+                    ResultSet rs = ps.executeQuery();
+                    selection[i] = rs.next() ? 1 : 0;
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return selection;
+    }
+
+    public void speichereHeizungSonderwuensche(int[] selection) throws SQLException {
+        if (this.kunde == null) return;
+        int hausNr = this.kunde.getHausnummer();
+        try (Connection con = DbConnector.getConnection()) {
+            // Delete existing Category 50 entries
+            String deleteSql = "DELETE FROM Sonderwunsch_has_Haus WHERE Haus_Hausnr = ? AND Sonderwunsch_idSonderwunsch IN (SELECT idSonderwunsch FROM Sonderwunsch WHERE Sonderwunschkategorie_idSonderwunschkategorie = ?)";
+            try (PreparedStatement del = con.prepareStatement(deleteSql)) {
+                del.setInt(1, hausNr);
+                del.setInt(2, 50);
+                del.executeUpdate();
+            }
+
+            String insertSql = "INSERT INTO Sonderwunsch_has_Haus (Sonderwunsch_idSonderwunsch, Haus_Hausnr) VALUES (?, ?)";
+            try (PreparedStatement ins = con.prepareStatement(insertSql)) {
+                for (int i=0; i<selection.length; i++) {
+                    if (selection[i] == 1) {
+                        String desc = HEIZUNG_DESCRIPTIONS[i];
+                        try (PreparedStatement find = con.prepareStatement("SELECT idSonderwunsch FROM Sonderwunsch WHERE Beschreibung = ?")) {
+                            find.setString(1, desc);
+                            ResultSet rs = find.executeQuery();
+                            if (rs.next()) {
+                                int swId = rs.getInt(1);
+                                ins.setInt(1, swId);
+                                ins.setInt(2, hausNr);
+                                ins.executeUpdate();
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) { throw new SQLException(e); }
+    }
    
    /**
     * Prueft, ob zu der aktuellen Hausnummer bereits Sonderwuensche der Kategorie "Grundriss-Varianten" (20) existieren.

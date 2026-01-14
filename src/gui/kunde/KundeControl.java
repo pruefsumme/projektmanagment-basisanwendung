@@ -33,6 +33,9 @@ public class KundeControl {
     /* das InnentuerenControl-Objekt fuer die Sonderwuensche
        zu Innentueren */
     private gui.innentueren.InnentuerenControl innentuerenControl;
+    /* das HeizungControl-Objekt fuer die Sonderwuensche
+       zu Heizungen */
+    private gui.heizung.HeizungControl heizungControl;
 
     /**
      * erzeugt ein ControlObjekt inklusive View-Objekt und Model-Objekt zum
@@ -75,6 +78,17 @@ public class KundeControl {
             this.innentuerenControl = new gui.innentueren.InnentuerenControl(kundeModel);
         }
         this.innentuerenControl.oeffneView();
+    }
+
+    /*
+     * erstellt, falls nicht vorhanden, ein Heizung-Control-Objekt.
+     * Das HeizungView wird sichtbar gemacht.
+     */
+    public void oeffneHeizungControl(){
+        if (this.heizungControl == null){
+            this.heizungControl = new gui.heizung.HeizungControl(kundeModel);
+        }
+        this.heizungControl.oeffneView();
     }
 
 
