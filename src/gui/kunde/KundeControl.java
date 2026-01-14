@@ -1,11 +1,19 @@
 package gui.kunde;
 
 import java.sql.SQLException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.io.FileWriter;
+import java.io.IOException;
 
+import data.DbConnector;
 import business.kunde.Kunde;
 import business.kunde.KundeModel;
 import gui.grundriss.GrundrissControl;
 import javafx.stage.Stage;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 
 /**
  * Klasse, welche das Grundfenster mit den Kundendaten kontrolliert.
@@ -19,6 +27,24 @@ public class KundeControl {
     /* das GrundrissControl-Objekt fuer die Sonderwuensche
        zum Grundriss zu dem Kunden */
     private GrundrissControl grundrissControl;
+    /* das FensterControl-Objekt fuer die Sonderwuensche
+       zu Fenster und Aussentueren */
+    private gui.fenster.FensterControl fensterControl;
+    /* das InnentuerenControl-Objekt fuer die Sonderwuensche
+       zu Innentueren */
+    private gui.innentueren.InnentuerenControl innentuerenControl;
+    /* das HeizungControl-Objekt fuer die Sonderwuensche
+       zu Heizungen */
+    private gui.heizung.HeizungControl heizungControl;
+    /* das SanitaerControl-Objekt fuer die Sonderwuensche
+       zu Sanitaerinstallation */
+    private gui.sanitaer.SanitaerControl sanitaerControl;
+    /* das FliesenControl-Objekt fuer die Sonderwuensche
+       zu Fliesen */
+    private gui.fliesen.FliesenControl fliesenControl;
+    /* das ParkettControl-Objekt fuer die Sonderwuensche
+       zu Parkett */
+    private gui.parkett.ParkettControl parkettControl;
 
     /**
      * erzeugt ein ControlObjekt inklusive View-Objekt und Model-Objekt zum
@@ -41,11 +67,94 @@ public class KundeControl {
         this.grundrissControl.oeffneGrundrissView();
     }
 
+    /*
+     * erstellt, falls nicht vorhanden, ein Fenster-Control-Objekt.
+     * Das FensterView wird sichtbar gemacht.
+     */
+    public void oeffneFensterControl(){
+        if (this.fensterControl == null){
+            this.fensterControl = new gui.fenster.FensterControl(kundeModel);
+        }
+        this.fensterControl.oeffneFensterView();
+    }
+
+    /*
+     * erstellt, falls nicht vorhanden, ein Innentueren-Control-Objekt.
+     * Das InnentuerenView wird sichtbar gemacht.
+     */
+    public void oeffneInnentuerenControl(){
+        if (this.innentuerenControl == null){
+            this.innentuerenControl = new gui.innentueren.InnentuerenControl(kundeModel);
+        }
+        this.innentuerenControl.oeffneView();
+    }
+
+    /*
+     * erstellt, falls nicht vorhanden, ein Heizung-Control-Objekt.
+     * Das HeizungView wird sichtbar gemacht.
+     */
+    public void oeffneHeizungControl(){
+        if (this.heizungControl == null){
+            this.heizungControl = new gui.heizung.HeizungControl(kundeModel);
+        }
+        this.heizungControl.oeffneView();
+    }
+
+    /*
+     * erstellt, falls nicht vorhanden, ein Sanitaer-Control-Objekt.
+     * Das SanitaerView wird sichtbar gemacht.
+     */
+    public void oeffneSanitaerControl(){
+        if (this.sanitaerControl == null){
+            this.sanitaerControl = new gui.sanitaer.SanitaerControl(kundeModel);
+        }
+        this.sanitaerControl.oeffneView();
+    }
+
+    /**
+     * oeffnet das Fenster zur Auswahl der Sonderwuensche zu Fliesen
+     */
+    public void oeffneFliesenControl(){
+        if (this.fliesenControl == null){
+            this.fliesenControl = new gui.fliesen.FliesenControl(kundeModel);
+        }
+        this.fliesenControl.oeffneView();
+    }
+
+    /**
+     * oeffnet das Fenster zur Auswahl der Sonderwuensche zu Parkett
+     */
+    public void oeffneParkettControl(){
+        if (this.parkettControl == null){
+            this.parkettControl = new gui.parkett.ParkettControl(kundeModel);
+        }
+        this.parkettControl.oeffneView();
+    }
+
+
     /**
      * speichert ein Kunde-Objekt in die Datenbank
      * @param kunde, Kunde-Objekt, welches zu speichern ist
      */
     public void speichereKunden(Kunde kunde){
+        // Validierung Telefonnummer
+        if (kunde.getTelefonnummer() != null && !kunde.getTelefonnummer().isEmpty() && !kunde.getTelefonnummer().matches("\\d+")) {
+            this.kundeView.zeigeFehlermeldung("Validierung", "Die Telefonnummer darf nur Ziffern enthalten.");
+            return;
+        }
+
+        // Validierung Hausnummer belegt
+        try {
+            if (kundeModel.istHausnummerBelegt(kunde.getHausnummer())) {
+                this.kundeView.zeigeFehlermeldung("Validierung", "Die Hausnummer " + kunde.getHausnummer() + " ist bereits belegt.");
+                return;
+            }
+        } catch (SQLException exc) {
+            exc.printStackTrace();
+            this.kundeView.zeigeFehlermeldung("Validierung", "Fehler bei der Validierung der Hausnummer.");
+            return;
+        }
+
         try{
             kundeModel.speichereKunden(kunde);
         }
@@ -126,5 +235,50 @@ public class KundeControl {
                     "Unbekannter Fehler beim Lesen");
         }
         return null;
+    }
+
+    public void exportiereSonderwuenscheCsv() {
+        Kunde kunde = kundeModel.getKunde();
+        if (kunde == null) {
+            this.kundeView.zeigeFehlermeldung("Kein Kunde", "Es wurde kein Kunde ausgewaehlt.");
+            return;
+        }
+
+        try (Connection con = DbConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(
+                 "SELECT s.Beschreibung, s.Preis FROM Sonderwunsch_has_Haus sh " +
+                 "JOIN Sonderwunsch s ON sh.Sonderwunsch_idSonderwunsch = s.idSonderwunsch " +
+                 "WHERE sh.Haus_Hausnr = ?")) {
+             ps.setInt(1, kunde.getHausnummer());
+             ResultSet rs = ps.executeQuery();
+             
+             String filename = kunde.getHausnummer() + "_" + kunde.getNachname() + ".csv";
+             try (FileWriter writer = new FileWriter(filename)) {
+                 boolean found = false;
+                 while(rs.next()){
+                     String beschreibung = rs.getString("Beschreibung");
+                     int preis = rs.getInt("Preis");
+                     writer.write(beschreibung + ";" + preis + "\n");
+                     found = true;
+                 }
+                 
+                 if (found) {
+                     Alert alert = new Alert(AlertType.INFORMATION);
+                     alert.setTitle("Erfolg");
+                     alert.setContentText("Sonderwuensche exportiert nach " + filename);
+                     alert.showAndWait();
+                 } else {
+                     Alert alert = new Alert(AlertType.INFORMATION);
+                     alert.setTitle("Info");
+                     alert.setContentText("Kunde hat keine Sonderwuensche.");
+                     alert.showAndWait();
+                 }
+             } catch (IOException e) {
+                 this.kundeView.zeigeFehlermeldung("IO Fehler", "Fehler beim Schreiben der CSV: " + e.getMessage());
+             }
+
+        } catch (SQLException e) {
+             this.kundeView.zeigeFehlermeldung("DB Fehler", "Fehler beim Lesen der Sonderwuensche: " + e.getMessage());
+        }
     }
 }

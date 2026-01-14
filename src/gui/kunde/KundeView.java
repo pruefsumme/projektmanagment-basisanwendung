@@ -36,7 +36,10 @@ public class KundeView{
     private Button btnLoeschen 	 		= new Button("Löschen");
     private MenuBar mnBar 			  	= new MenuBar();
     private Menu mnSonderwuensche    	= new Menu("Sonderwünsche");
-    private MenuItem mnItmGrundriss  	= new MenuItem("Grundrissvarianten");
+    private MenuItem mnItmGrundriss  	= new MenuItem("Grundrissvarianten");    private MenuItem mnItmFenster  	    = new MenuItem("Fenster und Außentüren");    private MenuItem mnItmInnentueren   = new MenuItem("Innentüren");     private MenuItem mnItmHeizungen   = new MenuItem("Heizungen");    private MenuItem mnItmSanitaer    = new MenuItem("Sanitärinstallation");
+    private MenuItem mnItmFliesen     = new MenuItem("Fliesen");
+    private MenuItem mnItmParkett     = new MenuItem("Parkett");
+    private MenuItem mnItmCsvExport  	= new MenuItem("Csv Export");
 
     private Label lblNachname = new Label("Nachname");
     private TextField txtNachname = new TextField();
@@ -109,6 +112,13 @@ public class KundeView{
         borderPane.setTop(mnBar);
         mnBar.getMenus().add(mnSonderwuensche);
         mnSonderwuensche.getItems().add(mnItmGrundriss);
+        mnSonderwuensche.getItems().add(mnItmFenster);
+        mnSonderwuensche.getItems().add(mnItmInnentueren);
+        mnSonderwuensche.getItems().add(mnItmHeizungen);
+        mnSonderwuensche.getItems().add(mnItmSanitaer);
+        mnSonderwuensche.getItems().add(mnItmFliesen);
+        mnSonderwuensche.getItems().add(mnItmParkett);
+        mnSonderwuensche.getItems().add(mnItmCsvExport);
     }
 
     /* initialisiert die Listener zu den Steuerelementen auf de Maske */
@@ -128,6 +138,27 @@ public class KundeView{
         });
         mnItmGrundriss.setOnAction(aEvent-> {
             kundeControl.oeffneGrundrissControl();
+        });
+        mnItmFenster.setOnAction(aEvent-> {
+            kundeControl.oeffneFensterControl();
+        });
+        mnItmInnentueren.setOnAction(aEvent-> {
+            kundeControl.oeffneInnentuerenControl();
+        });
+        mnItmHeizungen.setOnAction(aEvent-> {
+            kundeControl.oeffneHeizungControl();
+        });
+        mnItmSanitaer.setOnAction(aEvent-> {
+            kundeControl.oeffneSanitaerControl();
+        });
+        mnItmFliesen.setOnAction(aEvent-> {
+            kundeControl.oeffneFliesenControl();
+        });
+        mnItmParkett.setOnAction(aEvent-> {
+            kundeControl.oeffneParkettControl();
+        });
+        mnItmCsvExport.setOnAction(aEvent-> {
+            kundeControl.exportiereSonderwuenscheCsv();
         });
     }
 
