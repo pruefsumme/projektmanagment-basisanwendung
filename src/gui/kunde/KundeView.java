@@ -39,6 +39,7 @@ public class KundeView{
     private MenuItem mnItmGrundriss  	= new MenuItem("Grundrissvarianten");    private MenuItem mnItmFenster  	    = new MenuItem("Fenster und Außentüren");    private MenuItem mnItmInnentueren   = new MenuItem("Innentüren");     private MenuItem mnItmHeizungen   = new MenuItem("Heizungen");    private MenuItem mnItmSanitaer    = new MenuItem("Sanitärinstallation");
     private MenuItem mnItmFliesen     = new MenuItem("Fliesen");
     private MenuItem mnItmParkett     = new MenuItem("Parkett");
+    private MenuItem mnItmAussenanlagen = new MenuItem("Außenanlagen");
     private MenuItem mnItmCsvExport  	= new MenuItem("Csv Export");
 
     private Label lblNachname = new Label("Nachname");
@@ -118,6 +119,7 @@ public class KundeView{
         mnSonderwuensche.getItems().add(mnItmSanitaer);
         mnSonderwuensche.getItems().add(mnItmFliesen);
         mnSonderwuensche.getItems().add(mnItmParkett);
+        mnSonderwuensche.getItems().add(mnItmAussenanlagen);
         mnSonderwuensche.getItems().add(mnItmCsvExport);
     }
 
@@ -156,6 +158,9 @@ public class KundeView{
         });
         mnItmParkett.setOnAction(aEvent-> {
             kundeControl.oeffneParkettControl();
+        });
+        mnItmAussenanlagen.setOnAction(aEvent-> {
+            kundeControl.oeffneAussenanlagenControl();
         });
         mnItmCsvExport.setOnAction(aEvent-> {
             kundeControl.exportiereSonderwuenscheCsv();

@@ -45,6 +45,9 @@ public class KundeControl {
     /* das ParkettControl-Objekt fuer die Sonderwuensche
        zu Parkett */
     private gui.parkett.ParkettControl parkettControl;
+    /* das AussenanlagenControl-Objekt fuer die Sonderwuensche
+       zu Aussenanlagen */
+    private gui.aussenanlagen.AussenanlagenControl aussenanlagenControl;
 
     /**
      * erzeugt ein ControlObjekt inklusive View-Objekt und Model-Objekt zum
@@ -129,6 +132,16 @@ public class KundeControl {
             this.parkettControl = new gui.parkett.ParkettControl(kundeModel);
         }
         this.parkettControl.oeffneView();
+    }
+
+    /**
+     * oeffnet das Fenster zur Auswahl der Sonderwuensche zu Aussenanlagen
+     */
+    public void oeffneAussenanlagenControl(){
+        if (this.aussenanlagenControl == null){
+            this.aussenanlagenControl = new gui.aussenanlagen.AussenanlagenControl(kundeModel);
+        }
+        this.aussenanlagenControl.oeffneView();
     }
 
 
