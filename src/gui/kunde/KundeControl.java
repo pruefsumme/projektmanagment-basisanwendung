@@ -39,6 +39,9 @@ public class KundeControl {
     /* das SanitaerControl-Objekt fuer die Sonderwuensche
        zu Sanitaerinstallation */
     private gui.sanitaer.SanitaerControl sanitaerControl;
+    /* das FliesenControl-Objekt fuer die Sonderwuensche
+       zu Fliesen */
+    private gui.fliesen.FliesenControl fliesenControl;
 
     /**
      * erzeugt ein ControlObjekt inklusive View-Objekt und Model-Objekt zum
@@ -103,6 +106,16 @@ public class KundeControl {
             this.sanitaerControl = new gui.sanitaer.SanitaerControl(kundeModel);
         }
         this.sanitaerControl.oeffneView();
+    }
+
+    /**
+     * oeffnet das Fenster zur Auswahl der Sonderwuensche zu Fliesen
+     */
+    public void oeffneFliesenControl(){
+        if (this.fliesenControl == null){
+            this.fliesenControl = new gui.fliesen.FliesenControl(kundeModel);
+        }
+        this.fliesenControl.oeffneView();
     }
 
 
