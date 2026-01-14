@@ -61,6 +61,14 @@ public final class KundeModel {
         return this.plannummern;
     }
 
+    /**
+     * gibt den aktuellen Kunden zurueck.
+     * @return Kunde, der aktuelle Kunde
+     */
+    public Kunde getKunde() {
+        return this.kunde;
+    }
+    
     // ---- Datenbankzugriffe -------------------
 
     /**
@@ -191,13 +199,19 @@ public final class KundeModel {
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, hausnr);
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) return null;
+                if (!rs.next()) {
+                    this.kunde = null;
+                    return null;
+                }
                 Kunde k = new Kunde();
                 k.setHausnummer(rs.getInt("Haus_Hausnr"));
                 k.setVorname(rs.getString("Vorname"));
                 k.setNachname(rs.getString("Nachname"));
                 k.setTelefonnummer(rs.getString("Telefon"));
                 k.setEmail(rs.getString("email"));
+                
+                this.kunde = k; // Update the model's current customer
+                
                 return k;
             }
         }

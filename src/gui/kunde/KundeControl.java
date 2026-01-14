@@ -1,11 +1,19 @@
 package gui.kunde;
 
 import java.sql.SQLException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.io.FileWriter;
+import java.io.IOException;
 
+import data.DbConnector;
 import business.kunde.Kunde;
 import business.kunde.KundeModel;
 import gui.grundriss.GrundrissControl;
 import javafx.stage.Stage;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 
 /**
  * Klasse, welche das Grundfenster mit den Kundendaten kontrolliert.
@@ -126,5 +134,50 @@ public class KundeControl {
                     "Unbekannter Fehler beim Lesen");
         }
         return null;
+    }
+
+    public void exportiereSonderwuenscheCsv() {
+        Kunde kunde = kundeModel.getKunde();
+        if (kunde == null) {
+            this.kundeView.zeigeFehlermeldung("Kein Kunde", "Es wurde kein Kunde ausgewaehlt.");
+            return;
+        }
+
+        try (Connection con = DbConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(
+                 "SELECT s.Beschreibung, s.Preis FROM Sonderwunsch_has_Haus sh " +
+                 "JOIN Sonderwunsch s ON sh.Sonderwunsch_idSonderwunsch = s.idSonderwunsch " +
+                 "WHERE sh.Haus_Hausnr = ?")) {
+             ps.setInt(1, kunde.getHausnummer());
+             ResultSet rs = ps.executeQuery();
+             
+             String filename = kunde.getHausnummer() + "_" + kunde.getNachname() + ".csv";
+             try (FileWriter writer = new FileWriter(filename)) {
+                 boolean found = false;
+                 while(rs.next()){
+                     String beschreibung = rs.getString("Beschreibung");
+                     int preis = rs.getInt("Preis");
+                     writer.write(beschreibung + ";" + preis + "\n");
+                     found = true;
+                 }
+                 
+                 if (found) {
+                     Alert alert = new Alert(AlertType.INFORMATION);
+                     alert.setTitle("Erfolg");
+                     alert.setContentText("Sonderwuensche exportiert nach " + filename);
+                     alert.showAndWait();
+                 } else {
+                     Alert alert = new Alert(AlertType.INFORMATION);
+                     alert.setTitle("Info");
+                     alert.setContentText("Kunde hat keine Sonderwuensche.");
+                     alert.showAndWait();
+                 }
+             } catch (IOException e) {
+                 this.kundeView.zeigeFehlermeldung("IO Fehler", "Fehler beim Schreiben der CSV: " + e.getMessage());
+             }
+
+        } catch (SQLException e) {
+             this.kundeView.zeigeFehlermeldung("DB Fehler", "Fehler beim Lesen der Sonderwuensche: " + e.getMessage());
+        }
     }
 }

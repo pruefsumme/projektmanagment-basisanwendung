@@ -37,6 +37,7 @@ public class KundeView{
     private MenuBar mnBar 			  	= new MenuBar();
     private Menu mnSonderwuensche    	= new Menu("Sonderwünsche");
     private MenuItem mnItmGrundriss  	= new MenuItem("Grundrissvarianten");
+    private MenuItem mnItmCsvExport  	= new MenuItem("Csv Export");
 
     private Label lblNachname = new Label("Nachname");
     private TextField txtNachname = new TextField();
@@ -109,6 +110,7 @@ public class KundeView{
         borderPane.setTop(mnBar);
         mnBar.getMenus().add(mnSonderwuensche);
         mnSonderwuensche.getItems().add(mnItmGrundriss);
+        mnSonderwuensche.getItems().add(mnItmCsvExport);
     }
 
     /* initialisiert die Listener zu den Steuerelementen auf de Maske */
@@ -128,6 +130,9 @@ public class KundeView{
         });
         mnItmGrundriss.setOnAction(aEvent-> {
             kundeControl.oeffneGrundrissControl();
+        });
+        mnItmCsvExport.setOnAction(aEvent-> {
+            kundeControl.exportiereSonderwuenscheCsv();
         });
     }
 
