@@ -72,6 +72,17 @@ public final class KundeModel {
         660, 160, 660, 8990, 9990
     };
 
+    // Descriptions and Prices for Sanitaer (Category 60)
+    private static final String[] SANITAER_DESCRIPTIONS = {
+        "Groesseres Waschbecken im OG",
+        "Groesseres Waschbecken im DG",
+        "Bodentiefe Dusche im OG",
+        "Bodentiefe Dusche im DG"
+    };
+    private static final int[] SANITAER_PRICES = {
+        160, 160, 560, 560
+    };
+
 
     private void initSonderwuensche() {
         try (Connection con = DbConnector.getConnection()) {
@@ -92,6 +103,12 @@ public final class KundeModel {
                 String desc = HEIZUNG_DESCRIPTIONS[i];
                 int price = HEIZUNG_PRICES[i];
                 initSingleSonderwunsch(con, desc, price, 50);
+            }
+            // Check/Init Category 60 (Sanitaer)
+            for (int i=0; i < SANITAER_DESCRIPTIONS.length; i++) {
+                String desc = SANITAER_DESCRIPTIONS[i];
+                int price = SANITAER_PRICES[i];
+                initSingleSonderwunsch(con, desc, price, 60);
             }
          } catch (Exception e) { e.printStackTrace(); }
     }
@@ -306,6 +323,76 @@ public final class KundeModel {
                 for (int i=0; i<selection.length; i++) {
                     if (selection[i] == 1) {
                         String desc = HEIZUNG_DESCRIPTIONS[i];
+                        try (PreparedStatement find = con.prepareStatement("SELECT idSonderwunsch FROM Sonderwunsch WHERE Beschreibung = ?")) {
+                            find.setString(1, desc);
+                            ResultSet rs = find.executeQuery();
+                            if (rs.next()) {
+                                int swId = rs.getInt(1);
+                                ins.setInt(1, swId);
+                                ins.setInt(2, hausNr);
+                                ins.executeUpdate();
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) { throw new SQLException(e); }
+    }
+
+    // --- Methoden fuer Sanitaer (Category 60) ---
+
+    public int[] getSanitaerPreise() {
+        int[] prices = new int[SANITAER_DESCRIPTIONS.length];
+        try (Connection con = DbConnector.getConnection()) {
+            for (int i = 0; i < SANITAER_DESCRIPTIONS.length; i++) {
+                String desc = SANITAER_DESCRIPTIONS[i];
+                PreparedStatement ps = con.prepareStatement("SELECT Preis FROM Sonderwunsch WHERE Beschreibung = ?");
+                ps.setString(1, desc);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) prices[i] = rs.getInt("Preis");
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return prices;
+    }
+
+    public int[] getSanitaerSelection() {
+        int[] selection = new int[SANITAER_DESCRIPTIONS.length];
+        if (this.kunde == null) return selection;
+        int hausNr = this.kunde.getHausnummer();
+        try (Connection con = DbConnector.getConnection()) {
+            for (int i=0; i<SANITAER_DESCRIPTIONS.length; i++) {
+                String desc = SANITAER_DESCRIPTIONS[i];
+                String sql = "SELECT * FROM Sonderwunsch_has_Haus shh " +
+                             "JOIN Sonderwunsch s ON shh.Sonderwunsch_idSonderwunsch = s.idSonderwunsch " +
+                             "WHERE shh.Haus_Hausnr = ? AND s.Beschreibung = ?";
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setInt(1, hausNr);
+                    ps.setString(2, desc);
+                    ResultSet rs = ps.executeQuery();
+                    selection[i] = rs.next() ? 1 : 0;
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return selection;
+    }
+
+    public void speichereSanitaerSonderwuensche(int[] selection) throws SQLException {
+        if (this.kunde == null) return;
+        int hausNr = this.kunde.getHausnummer();
+        try (Connection con = DbConnector.getConnection()) {
+            // Delete existing Category 60 entries
+            String deleteSql = "DELETE FROM Sonderwunsch_has_Haus WHERE Haus_Hausnr = ? AND Sonderwunsch_idSonderwunsch IN (SELECT idSonderwunsch FROM Sonderwunsch WHERE Sonderwunschkategorie_idSonderwunschkategorie = ?)";
+            try (PreparedStatement del = con.prepareStatement(deleteSql)) {
+                del.setInt(1, hausNr);
+                del.setInt(2, 60);
+                del.executeUpdate();
+            }
+
+            String insertSql = "INSERT INTO Sonderwunsch_has_Haus (Sonderwunsch_idSonderwunsch, Haus_Hausnr) VALUES (?, ?)";
+            try (PreparedStatement ins = con.prepareStatement(insertSql)) {
+                for (int i=0; i<selection.length; i++) {
+                    if (selection[i] == 1) {
+                        String desc = SANITAER_DESCRIPTIONS[i];
                         try (PreparedStatement find = con.prepareStatement("SELECT idSonderwunsch FROM Sonderwunsch WHERE Beschreibung = ?")) {
                             find.setString(1, desc);
                             ResultSet rs = find.executeQuery();

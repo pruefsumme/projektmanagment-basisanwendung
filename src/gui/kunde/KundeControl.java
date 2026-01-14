@@ -36,6 +36,9 @@ public class KundeControl {
     /* das HeizungControl-Objekt fuer die Sonderwuensche
        zu Heizungen */
     private gui.heizung.HeizungControl heizungControl;
+    /* das SanitaerControl-Objekt fuer die Sonderwuensche
+       zu Sanitaerinstallation */
+    private gui.sanitaer.SanitaerControl sanitaerControl;
 
     /**
      * erzeugt ein ControlObjekt inklusive View-Objekt und Model-Objekt zum
@@ -89,6 +92,17 @@ public class KundeControl {
             this.heizungControl = new gui.heizung.HeizungControl(kundeModel);
         }
         this.heizungControl.oeffneView();
+    }
+
+    /*
+     * erstellt, falls nicht vorhanden, ein Sanitaer-Control-Objekt.
+     * Das SanitaerView wird sichtbar gemacht.
+     */
+    public void oeffneSanitaerControl(){
+        if (this.sanitaerControl == null){
+            this.sanitaerControl = new gui.sanitaer.SanitaerControl(kundeModel);
+        }
+        this.sanitaerControl.oeffneView();
     }
 
 

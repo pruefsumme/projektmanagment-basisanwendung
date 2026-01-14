@@ -36,7 +36,7 @@ public class KundeView{
     private Button btnLoeschen 	 		= new Button("Löschen");
     private MenuBar mnBar 			  	= new MenuBar();
     private Menu mnSonderwuensche    	= new Menu("Sonderwünsche");
-    private MenuItem mnItmGrundriss  	= new MenuItem("Grundrissvarianten");    private MenuItem mnItmFenster  	    = new MenuItem("Fenster und Außentüren");    private MenuItem mnItmInnentueren   = new MenuItem("Innentüren");     private MenuItem mnItmHeizungen   = new MenuItem("Heizungen");    private MenuItem mnItmCsvExport  	= new MenuItem("Csv Export");
+    private MenuItem mnItmGrundriss  	= new MenuItem("Grundrissvarianten");    private MenuItem mnItmFenster  	    = new MenuItem("Fenster und Außentüren");    private MenuItem mnItmInnentueren   = new MenuItem("Innentüren");     private MenuItem mnItmHeizungen   = new MenuItem("Heizungen");    private MenuItem mnItmSanitaer    = new MenuItem("Sanitärinstallation");    private MenuItem mnItmCsvExport  	= new MenuItem("Csv Export");
 
     private Label lblNachname = new Label("Nachname");
     private TextField txtNachname = new TextField();
@@ -112,6 +112,7 @@ public class KundeView{
         mnSonderwuensche.getItems().add(mnItmFenster);
         mnSonderwuensche.getItems().add(mnItmInnentueren);
         mnSonderwuensche.getItems().add(mnItmHeizungen);
+        mnSonderwuensche.getItems().add(mnItmSanitaer);
         mnSonderwuensche.getItems().add(mnItmCsvExport);
     }
 
@@ -141,6 +142,9 @@ public class KundeView{
         });
         mnItmHeizungen.setOnAction(aEvent-> {
             kundeControl.oeffneHeizungControl();
+        });
+        mnItmSanitaer.setOnAction(aEvent-> {
+            kundeControl.oeffneSanitaerControl();
         });
         mnItmCsvExport.setOnAction(aEvent-> {
             kundeControl.exportiereSonderwuenscheCsv();
