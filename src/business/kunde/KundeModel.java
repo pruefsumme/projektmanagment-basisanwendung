@@ -30,6 +30,115 @@ public final class KundeModel {
     /* privater Konstruktor gemaess des Singleton-Pattern */
     private KundeModel(){
         super();
+        this.initSonderwuensche();
+    }
+
+    // Descriptions and Prices for Fenster (Category 30)
+    private static final String[] FENSTER_DESCRIPTIONS = {
+        "Schiebetueren im EG zur Terrasse",
+        "Schiebetueren im DG zur Dachterrasse",
+        "Erhoehter Einbruchschutz an der Haustuer",
+        "Vorbereitung el. Antriebe Rolladen EG",
+        "Vorbereitung el. Antriebe Rolladen OG",
+        "Vorbereitung el. Antriebe Rolladen DG",
+        "Elektrische Rolladen EG",
+        "Elektrische Rolladen OG",
+        "Elektrische Rolladen DG"
+    };
+
+    private static final int[] FENSTER_PRICES = {
+        590, 590, 690, 190, 190, 190, 990, 990, 990
+    };
+
+    private void initSonderwuensche() {
+        try (Connection con = DbConnector.getConnection()) {
+            for (int i = 0; i < FENSTER_DESCRIPTIONS.length; i++) {
+                String desc = FENSTER_DESCRIPTIONS[i];
+                int price = FENSTER_PRICES[i];
+                try (PreparedStatement check = con.prepareStatement("SELECT * FROM Sonderwunsch WHERE Beschreibung = ?")) {
+                    check.setString(1, desc);
+                    ResultSet rs = check.executeQuery();
+                    if (!rs.next()) {
+                        try (PreparedStatement insert = con.prepareStatement("INSERT INTO Sonderwunsch (Beschreibung, Preis, Sonderwunschkategorie_idSonderwunschkategorie) VALUES (?, ?, 30)")) {
+                             insert.setString(1, desc);
+                             insert.setInt(2, price);
+                             insert.executeUpdate();
+                        }
+                    }
+                }
+            }
+         } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    public int[] getFensterPreise() {
+         int[] prices = new int[FENSTER_DESCRIPTIONS.length];
+         try (Connection con = DbConnector.getConnection()) {
+            for (int i = 0; i < FENSTER_DESCRIPTIONS.length; i++) {
+                 String desc = FENSTER_DESCRIPTIONS[i];
+                 PreparedStatement ps = con.prepareStatement("SELECT Preis FROM Sonderwunsch WHERE Beschreibung = ?");
+                 ps.setString(1, desc);
+                 ResultSet rs = ps.executeQuery();
+                 if (rs.next()) {
+                     prices[i] = rs.getInt("Preis");
+                 }
+            }
+         } catch (Exception e) { e.printStackTrace(); }
+         return prices;
+    }
+    
+    public void speichereFensterSonderwuensche(int[] selection) throws SQLException {
+         if (this.kunde == null) return;
+         int hausNr = this.kunde.getHausnummer();
+         
+         try (Connection con = DbConnector.getConnection()) {
+            String deleteSql = "DELETE FROM Sonderwunsch_has_Haus WHERE Haus_Hausnr = ? AND Sonderwunsch_idSonderwunsch IN (SELECT idSonderwunsch FROM Sonderwunsch WHERE Sonderwunschkategorie_idSonderwunschkategorie = ?)";
+            try (PreparedStatement del = con.prepareStatement(deleteSql)) {
+                del.setInt(1, hausNr);
+                del.setInt(2, 30); 
+                del.executeUpdate();
+            }
+            
+            String insertSql = "INSERT INTO Sonderwunsch_has_Haus (Sonderwunsch_idSonderwunsch, Haus_Hausnr) VALUES (?, ?)";
+            try (PreparedStatement ins = con.prepareStatement(insertSql)) {
+                for (int i=0; i<selection.length; i++) {
+                    if (selection[i] == 1) {
+                         String desc = FENSTER_DESCRIPTIONS[i];
+                         try (PreparedStatement find = con.prepareStatement("SELECT idSonderwunsch FROM Sonderwunsch WHERE Beschreibung = ?")) {
+                              find.setString(1, desc);
+                              ResultSet rs = find.executeQuery();
+                              if (rs.next()) {
+                                  int swId = rs.getInt(1);
+                                  ins.setInt(1, swId);
+                                  ins.setInt(2, hausNr);
+                                  ins.executeUpdate();
+                              }
+                         }
+                    }
+                }
+            }
+         } catch (Exception e) { throw new SQLException(e); }
+    }
+    
+    public int[] getFensterSelection() {
+         int[] selection = new int[FENSTER_DESCRIPTIONS.length];
+         if (this.kunde == null) return selection;
+         int hausNr = this.kunde.getHausnummer();
+         
+         try (Connection con = DbConnector.getConnection()) {
+             for (int i=0; i<FENSTER_DESCRIPTIONS.length; i++) {
+                 String desc = FENSTER_DESCRIPTIONS[i];
+                 String sql = "SELECT * FROM Sonderwunsch_has_Haus shh " +
+                              "JOIN Sonderwunsch s ON shh.Sonderwunsch_idSonderwunsch = s.idSonderwunsch " +
+                              "WHERE shh.Haus_Hausnr = ? AND s.Beschreibung = ?";
+                 try (PreparedStatement ps = con.prepareStatement(sql)) {
+                     ps.setInt(1, hausNr);
+                     ps.setString(2, desc);
+                     ResultSet rs = ps.executeQuery();
+                     if (rs.next()) selection[i] = 1; else selection[i] = 0;
+                 }
+             }
+         } catch (Exception e) { e.printStackTrace(); }
+         return selection;
     }
 
     /**

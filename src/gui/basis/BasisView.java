@@ -27,7 +27,7 @@ public abstract class BasisView {
     */
     public BasisView(Stage sonderwunschStage){
     	this.sonderwunschStage = sonderwunschStage;
-	    Scene scene = new Scene(borderPane, 560, 400);
+	    Scene scene = new Scene(borderPane, 600, 700);
 	    sonderwunschStage.setScene(scene);
 	
 	    this.initListener();
@@ -66,6 +66,10 @@ public abstract class BasisView {
     protected GridPane getGridPaneSonderwunsch() {
   		return this.gridPane;
   	}
+
+    protected GridPane getGridPaneButtons() {
+        return this.gridPaneButtons;
+    }
 
   	protected Label getLblSonderwunsch() {
   		return lblSonderwunsch;

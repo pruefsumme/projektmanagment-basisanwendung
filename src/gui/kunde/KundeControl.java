@@ -27,6 +27,9 @@ public class KundeControl {
     /* das GrundrissControl-Objekt fuer die Sonderwuensche
        zum Grundriss zu dem Kunden */
     private GrundrissControl grundrissControl;
+    /* das FensterControl-Objekt fuer die Sonderwuensche
+       zu Fenster und Aussentueren */
+    private gui.fenster.FensterControl fensterControl;
 
     /**
      * erzeugt ein ControlObjekt inklusive View-Objekt und Model-Objekt zum
@@ -48,6 +51,18 @@ public class KundeControl {
         }
         this.grundrissControl.oeffneGrundrissView();
     }
+
+    /*
+     * erstellt, falls nicht vorhanden, ein Fenster-Control-Objekt.
+     * Das FensterView wird sichtbar gemacht.
+     */
+    public void oeffneFensterControl(){
+        if (this.fensterControl == null){
+            this.fensterControl = new gui.fenster.FensterControl(kundeModel);
+        }
+        this.fensterControl.oeffneFensterView();
+    }
+
 
     /**
      * speichert ein Kunde-Objekt in die Datenbank
