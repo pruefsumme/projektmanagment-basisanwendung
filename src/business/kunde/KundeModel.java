@@ -96,6 +96,22 @@ public final class KundeModel {
         -590, -1870, 170, 190, 2190, 190
     };
 
+    // Descriptions and Prices for Parkett (Category 80)
+    private static final String[] PARKETT_DESCRIPTIONS = {
+        "Landhausdielen massiv im Essbereich des EG",
+        "Landhausdielen massiv im Küchenbereich des EG",
+        "Stäbchenparkett im Essbereich des EG",
+        "Stäbchenparkett im Küchenbereich des EG",
+        "Landhausdielen massiv im OG",
+        "Stäbchenparkett im OG",
+        "Landhausdielen massiv komplett im DG",
+        "Landhausdielen massiv ohne Badbereich im DG",
+        "Stäbchenparkett im DG komplett im DG",
+        "Stäbchenparkett ohne Badbereich im DG"
+    };
+    private static final int[] PARKETT_PRICES = {
+        2890, 2090, 2090, 1790, 2490, 1690, 2490, 2090, 1690, 1690
+    };
 
     private void initSonderwuensche() {
         try (Connection con = DbConnector.getConnection()) {
@@ -135,6 +151,12 @@ public final class KundeModel {
                 String desc = FLIESEN_DESCRIPTIONS[i];
                 int price = FLIESEN_PRICES[i];
                 initSingleSonderwunsch(con, desc, price, 70);
+            }
+            // Check/Init Category 80 (Parkett)
+            for (int i=0; i < PARKETT_DESCRIPTIONS.length; i++) {
+                String desc = PARKETT_DESCRIPTIONS[i];
+                int price = PARKETT_PRICES[i];
+                initSingleSonderwunsch(con, desc, price, 80);
             }
          } catch (Exception e) { e.printStackTrace(); }
     }
@@ -502,8 +524,111 @@ public final class KundeModel {
                     }
                 }
             }
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    // --- Methoden fuer Parkett (Category 80) ---
+
+    public int[] getParkettPreise() {
+        int[] prices = new int[PARKETT_DESCRIPTIONS.length];
+        try (Connection con = DbConnector.getConnection()) {
+            for (int i = 0; i < PARKETT_DESCRIPTIONS.length; i++) {
+                String desc = PARKETT_DESCRIPTIONS[i];
+                PreparedStatement ps = con.prepareStatement("SELECT Preis FROM Sonderwunsch WHERE Beschreibung = ?");
+                ps.setString(1, desc);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) prices[i] = rs.getInt("Preis");
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return prices;
+    }
+
+    public boolean hatHeizungSonderwuensche() {
+        if (this.kunde == null) return false;
+        try (Connection con = DbConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(
+                 "SELECT COUNT(*) FROM Sonderwunsch_has_Haus sh " + 
+                 "JOIN Sonderwunsch s ON sh.Sonderwunsch_idSonderwunsch = s.idSonderwunsch " +
+                 "WHERE sh.Haus_Hausnr = ? AND s.Sonderwunschkategorie_idSonderwunschkategorie = 50")) {
+             ps.setInt(1, this.kunde.getHausnummer());
+             ResultSet rs = ps.executeQuery();
+             if (rs.next()) {
+                 return rs.getInt(1) > 0;
+             }
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+ 
+    public boolean hatFliesenSonderwuensche() {
+        if (this.kunde == null) return false;
+        try (Connection con = DbConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(
+                 "SELECT COUNT(*) FROM Sonderwunsch_has_Haus sh " + 
+                 "JOIN Sonderwunsch s ON sh.Sonderwunsch_idSonderwunsch = s.idSonderwunsch " +
+                 "WHERE sh.Haus_Hausnr = ? AND s.Sonderwunschkategorie_idSonderwunschkategorie = 70")) {
+             ps.setInt(1, this.kunde.getHausnummer());
+             ResultSet rs = ps.executeQuery();
+             if (rs.next()) {
+                 return rs.getInt(1) > 0;
+             }
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    public int[] getParkettSelection() {
+        int[] selection = new int[PARKETT_DESCRIPTIONS.length];
+        if (this.kunde == null) return selection;
+        int hausNr = this.kunde.getHausnummer();
+        try (Connection con = DbConnector.getConnection()) {
+            for (int i=0; i<PARKETT_DESCRIPTIONS.length; i++) {
+                String desc = PARKETT_DESCRIPTIONS[i];
+                String sql = "SELECT * FROM Sonderwunsch_has_Haus shh " +
+                             "JOIN Sonderwunsch s ON shh.Sonderwunsch_idSonderwunsch = s.idSonderwunsch " +
+                             "WHERE shh.Haus_Hausnr = ? AND s.Beschreibung = ?";
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setInt(1, hausNr);
+                    ps.setString(2, desc);
+                    ResultSet rs = ps.executeQuery();
+                    selection[i] = rs.next() ? 1 : 0;
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return selection;
+    }
+
+    public void speichereParkettSonderwuensche(int[] selection) throws SQLException {
+        if (this.kunde == null) return;
+        int hausNr = this.kunde.getHausnummer();
+        try (Connection con = DbConnector.getConnection()) {
+            // Delete existing Category 80 entries
+            String deleteSql = "DELETE FROM Sonderwunsch_has_Haus WHERE Haus_Hausnr = ? AND Sonderwunsch_idSonderwunsch IN (SELECT idSonderwunsch FROM Sonderwunsch WHERE Sonderwunschkategorie_idSonderwunschkategorie = ?)";
+            try (PreparedStatement del = con.prepareStatement(deleteSql)) {
+                del.setInt(1, hausNr);
+                del.setInt(2, 80);
+                del.executeUpdate();
+            }
+
+            String insertSql = "INSERT INTO Sonderwunsch_has_Haus (Sonderwunsch_idSonderwunsch, Haus_Hausnr) VALUES (?, ?)";
+            try (PreparedStatement ins = con.prepareStatement(insertSql)) {
+                for (int i=0; i<selection.length; i++) {
+                    if (selection[i] == 1) {
+                        String desc = PARKETT_DESCRIPTIONS[i];
+                        try (PreparedStatement find = con.prepareStatement("SELECT idSonderwunsch FROM Sonderwunsch WHERE Beschreibung = ?")) {
+                            find.setString(1, desc);
+                            ResultSet rs = find.executeQuery();
+                            if (rs.next()) {
+                                int swId = rs.getInt(1);
+                                ins.setInt(1, swId);
+                                ins.setInt(2, hausNr);
+                                ins.executeUpdate();
+                            }
+                        }
+                    }
+                }
+            }
         } catch (Exception e) { throw new SQLException(e); }
     }
+
    
    /**
     * Prueft, ob zu der aktuellen Hausnummer bereits Sonderwuensche der Kategorie "Grundriss-Varianten" (20) existieren.

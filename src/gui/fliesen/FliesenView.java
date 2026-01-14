@@ -3,6 +3,7 @@ package gui.fliesen;
 import gui.basis.BasisView;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
+import javafx.scene.control.Alert.AlertType;
 
 public class FliesenView extends BasisView {
 
@@ -110,7 +111,7 @@ public class FliesenView extends BasisView {
 
     public void oeffneFliesenView() {
         // Load initial state
-        berechneUndZeigePreisSonderwuensche();
+        zeigeEinzelPreise();
         int[] selection = control.leseSelection();
         setSelection(selection);
         super.oeffneBasisView();
@@ -126,10 +127,8 @@ public class FliesenView extends BasisView {
         }
     }
 
-    @Override
-    protected void berechneUndZeigePreisSonderwuensche() {
+    private void zeigeEinzelPreise() {
         int[] prices = control.lesePreise();
-        // Assuming order matches descriptions
         if (prices.length >= 6) {
             txtPreisKeineKueche.setText(String.valueOf(prices[0]));
             txtPreisKeineBadOG.setText(String.valueOf(prices[1]));
@@ -137,6 +136,40 @@ public class FliesenView extends BasisView {
             txtPreisGrossBadOG.setText(String.valueOf(prices[3]));
             txtPreisBadDG.setText(String.valueOf(prices[4]));
             txtPreisGrossBadDG.setText(String.valueOf(prices[5]));
+        }
+    }
+
+    @Override
+    protected void berechneUndZeigePreisSonderwuensche() {
+        // Load unit prices to text fields first (if not already loaded)
+        zeigeEinzelPreise();
+
+        // Calculate total of selected items
+        int gesamtPreis = 0;
+        if (chckBxKeineKueche.isSelected()) gesamtPreis += Integer.parseInt(txtPreisKeineKueche.getText());
+        if (chckBxKeineBadOG.isSelected()) gesamtPreis += Integer.parseInt(txtPreisKeineBadOG.getText());
+        if (chckBxGrossKueche.isSelected()) gesamtPreis += Integer.parseInt(txtPreisGrossKueche.getText());
+        if (chckBxGrossBadOG.isSelected()) gesamtPreis += Integer.parseInt(txtPreisGrossBadOG.getText());
+        if (chckBxBadDG.isSelected()) gesamtPreis += Integer.parseInt(txtPreisBadDG.getText());
+        if (chckBxGrossBadDG.isSelected()) gesamtPreis += Integer.parseInt(txtPreisGrossBadDG.getText());
+
+        // Check verification before showing price? 
+        // Logic in GrundrissView: if (this.grundrissControl.pruefeKonstellationSonderwuensche(ausgewaehlteSw))
+        // We should replicate that pattern.
+        int[] selection = new int[6];
+        selection[0] = chckBxKeineKueche.isSelected() ? 1 : 0;
+        selection[1] = chckBxKeineBadOG.isSelected() ? 1 : 0;
+        selection[2] = chckBxGrossKueche.isSelected() ? 1 : 0;
+        selection[3] = chckBxGrossBadOG.isSelected() ? 1 : 0;
+        selection[4] = chckBxBadDG.isSelected() ? 1 : 0;
+        selection[5] = chckBxGrossBadDG.isSelected() ? 1 : 0;
+
+        if (control.pruefeKonstellationSonderwuensche(selection)) {
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setTitle("Preisberechnung");
+            alert.setHeaderText("Gesamtpreis der Sonderwuensche");
+            alert.setContentText("Der Gesamtpreis betraegt: " + gesamtPreis + " Euro");
+            alert.showAndWait();
         }
     }
 

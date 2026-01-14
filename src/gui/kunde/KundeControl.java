@@ -42,6 +42,9 @@ public class KundeControl {
     /* das FliesenControl-Objekt fuer die Sonderwuensche
        zu Fliesen */
     private gui.fliesen.FliesenControl fliesenControl;
+    /* das ParkettControl-Objekt fuer die Sonderwuensche
+       zu Parkett */
+    private gui.parkett.ParkettControl parkettControl;
 
     /**
      * erzeugt ein ControlObjekt inklusive View-Objekt und Model-Objekt zum
@@ -116,6 +119,16 @@ public class KundeControl {
             this.fliesenControl = new gui.fliesen.FliesenControl(kundeModel);
         }
         this.fliesenControl.oeffneView();
+    }
+
+    /**
+     * oeffnet das Fenster zur Auswahl der Sonderwuensche zu Parkett
+     */
+    public void oeffneParkettControl(){
+        if (this.parkettControl == null){
+            this.parkettControl = new gui.parkett.ParkettControl(kundeModel);
+        }
+        this.parkettControl.oeffneView();
     }
 
 
