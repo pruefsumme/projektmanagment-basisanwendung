@@ -36,7 +36,7 @@ public class KundeView{
     private Button btnLoeschen 	 		= new Button("Löschen");
     private MenuBar mnBar 			  	= new MenuBar();
     private Menu mnSonderwuensche    	= new Menu("Sonderwünsche");
-    private MenuItem mnItmGrundriss  	= new MenuItem("Grundrissvarianten");    private MenuItem mnItmFenster  	    = new MenuItem("Fenster und Außentüren");    private MenuItem mnItmCsvExport  	= new MenuItem("Csv Export");
+    private MenuItem mnItmGrundriss  	= new MenuItem("Grundrissvarianten");    private MenuItem mnItmFenster  	    = new MenuItem("Fenster und Außentüren");    private MenuItem mnItmInnentueren   = new MenuItem("Innentüren");    private MenuItem mnItmCsvExport  	= new MenuItem("Csv Export");
 
     private Label lblNachname = new Label("Nachname");
     private TextField txtNachname = new TextField();
@@ -110,6 +110,7 @@ public class KundeView{
         mnBar.getMenus().add(mnSonderwuensche);
         mnSonderwuensche.getItems().add(mnItmGrundriss);
         mnSonderwuensche.getItems().add(mnItmFenster);
+        mnSonderwuensche.getItems().add(mnItmInnentueren);
         mnSonderwuensche.getItems().add(mnItmCsvExport);
     }
 
@@ -133,6 +134,9 @@ public class KundeView{
         });
         mnItmFenster.setOnAction(aEvent-> {
             kundeControl.oeffneFensterControl();
+        });
+        mnItmInnentueren.setOnAction(aEvent-> {
+            kundeControl.oeffneInnentuerenControl();
         });
         mnItmCsvExport.setOnAction(aEvent-> {
             kundeControl.exportiereSonderwuenscheCsv();

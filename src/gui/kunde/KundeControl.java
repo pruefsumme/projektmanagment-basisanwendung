@@ -30,6 +30,9 @@ public class KundeControl {
     /* das FensterControl-Objekt fuer die Sonderwuensche
        zu Fenster und Aussentueren */
     private gui.fenster.FensterControl fensterControl;
+    /* das InnentuerenControl-Objekt fuer die Sonderwuensche
+       zu Innentueren */
+    private gui.innentueren.InnentuerenControl innentuerenControl;
 
     /**
      * erzeugt ein ControlObjekt inklusive View-Objekt und Model-Objekt zum
@@ -61,6 +64,17 @@ public class KundeControl {
             this.fensterControl = new gui.fenster.FensterControl(kundeModel);
         }
         this.fensterControl.oeffneFensterView();
+    }
+
+    /*
+     * erstellt, falls nicht vorhanden, ein Innentueren-Control-Objekt.
+     * Das InnentuerenView wird sichtbar gemacht.
+     */
+    public void oeffneInnentuerenControl(){
+        if (this.innentuerenControl == null){
+            this.innentuerenControl = new gui.innentueren.InnentuerenControl(kundeModel);
+        }
+        this.innentuerenControl.oeffneView();
     }
 
 
